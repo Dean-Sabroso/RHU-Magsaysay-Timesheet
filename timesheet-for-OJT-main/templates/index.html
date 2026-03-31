@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OJT Timesheet Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            /* Green gradient background */
+            background: linear-gradient(135deg, rgba(209, 250, 229, 0.9) 0%, rgba(167, 243, 208, 0.9) 100%);
+            min-height: 100vh;
+            position: relative;
+            z-index: 0;
+        }
+
+        /* Logo Watermark Background with 30% Opacity */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Using Flask url_for to locate the image in static/uploads */
+            background: url("{{ url_for('static', filename='uploads/RHU Logo.png') }}") center center / contain no-repeat;
+            opacity: 0.30;
+            z-index: -1;
+        }
+
+        .glass-card {
+            /* Translucent white to let the background peak through */
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary { background-color: var(--primary-color); border: none; border-radius: 8px; padding: 10px 20px; }
+        .btn-primary:hover { background-color: #4338ca; }
+        .table { border-radius: 12px; overflow: hidden; background: transparent; }
+        .table thead { background-color: rgba(241, 245, 249, 0.7); }
+        .form-label { font-weight: 600; font-size: 0.9rem; color: #475569; }
+        .form-control { border-radius: 8px; border: 1px solid #cbd5e1; padding: 0.6rem; background: rgba(255, 255, 255, 0.9); }
+        .form-select { border-radius: 8px; border: 1px solid #cbd5e1; padding: 0.6rem; background-color: rgba(255, 255, 255, 0.9); }
+        .section-title { font-weight: 600; margin-bottom: 1.5rem; border-left: 4px solid var(--primary-color); padding-left: 1rem; }
+        .photo-preview { width: 150px; height: 150px; object-fit: cover; border-radius: 12px; border: 3px solid #e2e8f0; margin: 0 auto 1rem auto; display: block; background: white; }
+
+        .header-logo { width: 110px; height: auto; margin-bottom: 1rem; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: white; padding: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <header class="text-center mb-5">
+            <img src="{{ url_for('static', filename='uploads/RHU Logo.png') }}" alt="RHU Logo" class="header-logo">
+            <h1 class="fw-bold">OJT <span style="color: var(--primary-color);">Timesheet</span></h1>
+            <p class="text-muted fw-medium">Track your progress and predict your completion date.</p>
+        </header>
+
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="glass-card">
+                    <h5 class="section-title">Intern Details</h5>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% if profile_photo %}
+                            <img src="{{ url_for('static', filename='uploads/' + profile_photo) }}" alt="2x2 Photo" class="photo-preview">
+                        {% else %}
+                            <div class="photo-preview d-flex align-items-center justify-content-center text-muted" style="font-size: 0.8rem;">No 2x2 Photo</div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label class="form-label">Upload 2x2 Photo</label>
+                            <input type="file" class="form-control" name="profile_photo" accept="image/*">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" name="full_name" value="{{ full_name }}" placeholder="Juan Dela Cruz">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Company</label>
+                            <input type="text" class="form-control" name="company_name" value="{{ company_name }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" name="company_address" value="{{ company_address }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Year Level</label>
+                            <select class="form-select" name="college_year">
+                                {% for year in ["First Year", "Second Year", "Third Year", "Fourth Year", "Fifth Year"] %}
+                                <option value="{{ year }}" {% if college_year == year %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" name="save_details" class="btn btn-primary w-100">Update Profile</button>
+                    </form>
+                </div>
+
+                <div class="glass-card">
+                    <h5 class="section-title">Program Goal</h5>
+                    <form method="POST">
+                        <select class="form-select mb-3" name="program">
+                            <option value="300" {% if required_hours == 300 %}selected{% endif %}>Computer Science (300 hrs)</option>
+                            <option value="486" {% if required_hours == 486 %}selected{% endif %}>Information Technology (280 hrs)</option>
+                            <option value="200" {% if required_hours == 200 %}selected{% endif %}>Environmental Science (320 hrs)</option>
+                            <option value="180" {% if required_hours == 180 %}selected{% endif %}>Medical Biology (350 hrs)</option>
+                        </select>
+                        <button type="submit" class="btn btn-secondary w-100" style="background-color: #64748b; border: none;">Set Target</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="stats-card">
+                            <small class="opacity-75">Rendered</small>
+                            <h3>{{ total_week_hours }}h</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-card" style="background: rgba(255, 255, 255, 0.9); color: #1e293b;">
+                            <small class="text-muted">Remaining</small>
+                            <h3>{{ remaining_hours }}h</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="stats-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            <small class="opacity-75">Finish Date</small>
+                            <h5>{% if predicted_completion_date %}{{ predicted_completion_date.strftime('%b %d, %Y') }}{% else %}N/A{% endif %}</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="section-title m-0">Log Daily Hours</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="fillStandardShift()">Quick 8-5 Shift</button>
+                    </div>
+                    <form method="POST" class="row g-2">
+                        <div class="col-md-3"><label class="small fw-bold text-muted">DATE</label><input type="date" class="form-control" name="date" required></div>
+                        <div class="col-md-2"><label class="small fw-bold text-muted">AM IN</label><input type="time" class="form-control" id="add_am_in" name="morning_in"></div>
+                        <div class="col-md-2"><label class="small fw-bold text-muted">AM OUT</label><input type="time" class="form-control" id="add_am_out" name="morning_out"></div>
+                        <div class="col-md-2"><label class="small fw-bold text-muted">PM IN</label><input type="time" class="form-control" id="add_pm_in" name="afternoon_in"></div>
+                        <div class="col-md-2"><label class="small fw-bold text-muted">PM OUT</label><input type="time" class="form-control" id="add_pm_out" name="afternoon_out"></div>
+                        <div class="col-md-1 d-flex align-items-end"><button type="submit" name="add_entry" class="btn btn-success w-100" style="background-color: #10b981; border: none;">+</button></div>
+                    </form>
+                </div>
+
+                <div class="glass-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="m-0 fw-semibold">Records</h5>
+                        <div>
+                            <a href="/download/csv" class="btn btn-outline-info btn-sm bg-white">CSV</a>
+                            <a href="/download/pdf" class="btn btn-outline-warning btn-sm bg-white">PDF</a>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>AM</th>
+                                    <th>PM</th>
+                                    <th>Hours</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in timesheet %}
+                                <tr id="row-{{ entry.date }}">
+                                    <td>{{ entry.date }}</td>
+                                    <td><span class="badge bg-white text-dark border">{{ entry.day }}</span></td>
+                                    <td><small>{{ entry.morning_in }} - {{ entry.morning_out }}</small></td>
+                                    <td><small>{{ entry.afternoon_in }} - {{ entry.afternoon_out }}</small></td>
+                                    <td><strong class="text-primary">{{ entry.total_hours }}</strong></td>
+                                    <td>
+                                        <button onclick="openEditModal('{{ entry.date }}', '{{ entry.morning_in }}', '{{ entry.morning_out }}', '{{ entry.afternoon_in }}', '{{ entry.afternoon_out }}')" class="btn btn-link text-primary p-0 me-2 text-decoration-none">Edit</button>
+                                        <button onclick="deleteEntry('{{ entry.date }}')" class="btn btn-link text-danger p-0 text-decoration-none">Delete</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <form method="POST" action="/reset" class="text-end mt-2">
+                        <button type="submit" class="btn btn-link text-muted btn-sm text-decoration-none">Reset All Data</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold">Edit Record</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit_old_date">
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" id="edit_date" class="form-control" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small">AM IN</label>
+                            <input type="time" id="edit_am_in" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">AM OUT</label>
+                            <input type="time" id="edit_am_out" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small">PM IN</label>
+                            <input type="time" id="edit_pm_in" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">PM OUT</label>
+                            <input type="time" id="edit_pm_out" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fill quick times
+        function fillStandardShift() {
+            document.getElementById('add_am_in').value = '08:00';
+            document.getElementById('add_am_out').value = '12:00';
+            document.getElementById('add_pm_in').value = '13:00';
+            document.getElementById('add_pm_out').value = '17:00';
+        }
+
+        function deleteEntry(date) {
+            if(confirm("Are you sure you want to delete this record?")) {
+                fetch(`/delete_entry/${date}`, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => { if (data.success) location.reload(); });
+            }
+        }
+
+        // Edit functionality
+        const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+
+        function openEditModal(date, am_in, am_out, pm_in, pm_out) {
+            document.getElementById('edit_old_date').value = date;
+            document.getElementById('edit_date').value = date;
+            document.getElementById('edit_am_in').value = am_in;
+            document.getElementById('edit_am_out').value = am_out;
+            document.getElementById('edit_pm_in').value = pm_in;
+            document.getElementById('edit_pm_out').value = pm_out;
+            editModal.show();
+        }
+
+        function saveEdit() {
+            const payload = {
+                old_date: document.getElementById('edit_old_date').value,
+                date: document.getElementById('edit_date').value,
+                morning_in: document.getElementById('edit_am_in').value,
+                morning_out: document.getElementById('edit_am_out').value,
+                afternoon_in: document.getElementById('edit_pm_in').value,
+                afternoon_out: document.getElementById('edit_pm_out').value
+            };
+
+            fetch('/edit_entry', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
