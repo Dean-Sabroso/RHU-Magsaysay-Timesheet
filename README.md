@@ -13,6 +13,7 @@ A comprehensive and responsive web-based timesheet tracking system designed to h
 
 
 Features ✨
+
 👤 Intern Profile Management
   -  Upload 2x2 Profile Photo
   - View and Update Personal Details (Name, Year Level)
